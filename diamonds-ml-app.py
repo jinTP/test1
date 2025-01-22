@@ -1,6 +1,7 @@
 import streamlit as st
 import joblib
 import numpy as np
+import pandas as pd
 
 # Load the trained model
 model = joblib.load('diamond_price_model.pkl')
@@ -22,7 +23,24 @@ z = st.number_input("Depth (mm)", min_value=0.0, step=0.1)
 # Button for prediction
 if st.button("Predict Price"):
     # Prepare input data for prediction
-    input_data = np.array([[carat, cut, color, clarity, depth, table, x, y, z]])
+    input_data = pd.DataFrame({
+        'carat': [carat],
+        'cut': [cut],
+        'color': [color],
+        'clarity': [clarity],
+        'depth': [depth],
+        'table': [table],
+        'x': [x],
+        'y': [y],
+        'z': [z]
+    })
+    
+    # Perform one-hot encoding for categorical features
+    input_data = pd.get_dummies(input_data, columns=['cut', 'color', 'clarity'])
+    
+    # Ensure the input data has the same columns as the training data
+    model_columns = joblib.load('model_columns.pkl')
+    input_data = input_data.reindex(columns=model_columns, fill_value=0)
     
     # Make prediction
     prediction = model.predict(input_data)
